@@ -30,7 +30,7 @@ jobs:
     runs-on: ${{ matrix.build.os }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v2
         with:
           submodules: recursive
 
@@ -42,3 +42,8 @@ jobs:
           build-platform: ${{ matrix.build.platform }}
           package: false
           go-version: '1.20'
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.build.name }}-artifact
+          path: dist/  # Update this path to where your build artifacts are generated

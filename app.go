@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -83,12 +84,36 @@ func startHTTPServer(dir string, port int) {
 func (a *App) GetCategories() []string {
 	yamlFile, err := os.ReadFile("data.yaml")
 	if err != nil {
-		runtime.MessageDialog(a.ctx, runtime.MessageDialogOptions{
-			Title:   "Error",
-			Message: fmt.Sprintf("Error reading config for categories %s", err.Error()),
-			Type:    runtime.ErrorDialog,
-		})
-		return []string{}
+		if errors.Is(err, os.ErrNotExist) {
+			dataEmpty := Data{
+				Categories: []string{},
+			}
+			yamlData, err := yaml.Marshal(&dataEmpty)
+			if err != nil {
+				runtime.MessageDialog(a.ctx, runtime.MessageDialogOptions{
+					Title:   "Error",
+					Message: fmt.Sprintf("Error %s", err.Error()),
+					Type:    runtime.ErrorDialog,
+				})
+				return []string{}
+			}
+			err = os.WriteFile("data.yaml", yamlData, 0644)
+			if err != nil {
+				runtime.MessageDialog(a.ctx, runtime.MessageDialogOptions{
+					Title:   "Error",
+					Message: fmt.Sprintf("Error %s", err.Error()),
+					Type:    runtime.ErrorDialog,
+				})
+				return []string{}
+			}
+		} else {
+			runtime.MessageDialog(a.ctx, runtime.MessageDialogOptions{
+				Title:   "Error",
+				Message: fmt.Sprintf("Error %s", err.Error()),
+				Type:    runtime.ErrorDialog,
+			})
+			return []string{}
+		}
 	}
 
 	// Unmarshal YAML into struct

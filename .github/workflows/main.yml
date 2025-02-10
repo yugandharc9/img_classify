@@ -3,47 +3,40 @@ name: Wails build
 on:
   push:
     tags:
-    # Match any new tag
-      - '*'
+      - '*'  # Match any new tag
 
 env:
-  # Necessary for most environments as build failure can occur due to OOM issues
+  # Prevent OOM issues
   NODE_OPTIONS: "--max-old-space-size=4096"
 
 jobs:
   build:
     strategy:
-    # Failure in one platform build won't impact the others
-      fail-fast: false
+      fail-fast: false  # Failure in one platform build won't impact others
       matrix:
-        build:
-          - name: 'App'
-            platform:  'linux/amd64'
-            os: 'ubuntu-latest'
-          - name: 'App'
-            platform:  'windows/amd64'
-            os: 'windows-latest'
-          - name: 'App'
-            platform:  'darwin/universal'
-            os: 'macos-latest'
+        name: ['App']
+        platform: ['linux/amd64', 'windows/amd64', 'darwin/universal']
+        os: ['ubuntu-latest', 'windows-latest', 'macos-latest']
 
-    runs-on: ${{ matrix.build.os }}
+    runs-on: ${{ matrix.os }}
+    
     steps:
-      - name: Checkout
+      - name: Checkout repository
         uses: actions/checkout@v2
         with:
           submodules: recursive
 
       - name: Build wails
-        uses: dAppServer/wails-build-action@v2.2
+        uses: dAppServer/wails-build-action@v2
         id: build
         with:
-          build-name: ${{ matrix.build.name }}
-          build-platform: ${{ matrix.build.platform }}
+          build-name: ${{ matrix.name }}
+          build-platform: ${{ matrix.platform }}
           package: false
           go-version: '1.20'
+
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.build.name }}-artifact
-          path: dist/  # Update this path to where your build artifacts are generated
+          name: ${{ matrix.name }}-artifact
+          path: dist/  # Ensure this path matches the actual output directory
